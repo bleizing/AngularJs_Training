@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AngularJS</title>
+</head>
+<style>
+    table, th , td {
+        border: 1px solid grey;
+        border-collapse: collapse;
+        padding: 5px;
+    }
+    table tr:nth-child(odd) {
+        background-color: #f1f1f1;
+    }
+    table tr:nth-child(even) {
+        background-color: #ffffff;
+    }
+    table thead th {
+        background-color: #11f1f1;
+    }
+</style>
+<body>
+<script src="angular.min.js"></script>
+<div ng-app="app">
+    <div ng-controller="controller">
+        Search : <input type="text" ng-model="name">
+        <br>
+        <!--<p>Hello, {{showName() + id + " " + tempId}}</p>-->
+        <br>
+
+        <button ng-click="add()">ADD DATA</button>
+        <div ng-hide="showOrHide">
+            <br>
+            <input type="hidden" ng-model="id"> <br>
+            USERNAME &nbsp: &nbsp&nbsp<input type="text" ng-model="username"> <br>
+            NAMA &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp:&nbsp&nbsp <input type="text" ng-model="nama">
+            <br>
+            <br>
+            <button ng-click="saveData()" ng-hide="showOrHide">SAVE</button>
+        </div>
+        <br>
+        {{msg}}
+        <br>
+        <br>
+        <table width="800px" border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>USERNAME</th>
+                    <th>NAMA</th>
+                    <th>ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="x in datas | filter:name">
+                    <td><center> {{x.id}} </center></td>
+                    <td> {{x.username}} </td>
+                    <td> {{x.nama}} </td>
+                    <td>
+                        <center>
+                            <button ng-click="edit(x.id)">Edit</button>
+                            <button ng-click="deleteData(x.id)">Delete</button>
+                        </center>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    var app = angular.module('app', []);
+    app.controller('controller', function ($scope, $http, $interval, $timeout) {
+        $scope.name = "";
+        $scope.showName = function () {
+            return $scope.name;
+        };
+        $scope.showOrHide = true;
+        $scope.tempId = 0;
+//        $scope.getData = function () {
+//            $http.get("index.php").then(function (response) {
+//                $scope.datas = response.data.records;
+//                $scope.msg = "berhasil";
+//            }, function (response) {
+//                $scope.msg = "gagal";
+//            });
+//        };
+//        $scope.getData();
+//        $interval(function () {
+//            $scope.getData();
+//        }, 1000);
+
+        $scope.clearForm = function () {
+            $scope.nama = "";
+            $scope.username = "";
+        };
+
+        $scope.add = function () {
+            $scope.clearForm();
+            $scope.id = 0;
+            $scope.checkShowOrHide($scope.id);
+        };
+
+        $scope.saveData = function () {
+            $http({
+              method: "POST",
+              data: {
+                  'id' : $scope.id,
+                  'username' : $scope.username,
+                  'nama' : $scope.nama
+              },
+              url: "saveData.php"
+            }).then(function success(response) {
+              $scope.msg = response.data.msg;
+            }, function failed(response) {
+              $scope.msg = response.data.msg;
+            });
+            $scope.clearMsg();
+            $scope.clearForm();
+        };
+
+        $scope.getData = function () {
+            $http.get("getData.php").then(function (response) {
+                $scope.datas = response.data.records;
+//                $scope.msg = "berhasil";
+            }, function () {
+//                $scope.msg = "gagal";
+            });
+        };
+        $scope.getData();
+        $interval(function () {
+            $scope.getData();
+        }, 1000);
+
+        $scope.edit = function (id) {
+            $scope.checkShowOrHide(id);
+
+            $http({
+                method: "POST",
+                data: {
+                    'member_id' : id
+                },
+                url: "readMember.php"
+            }).then(function (response) {
+                $scope.id = response.data["id"];
+                $scope.username = response.data["username"];
+                $scope.nama = response.data["nama"];
+            }, function (response) {
+
+            });
+        };
+
+//        $scope.editData = function () {
+//            $http({
+//                method: "POST",
+//                data: {
+//                    'id' : $scope.id,
+//                    'username' : $scope.username,
+//                    'nama' : $scope.nama
+//                },
+//                url: "editData.php"
+//            }).then(function success(response) {
+//                $scope.msg = response.data.msg;
+//            }, function failed(response) {
+//                $scope.msg = response.data.msg;
+//            });
+//            $scope.clearForm();
+//        };
+
+        $scope.deleteData = function (id) {
+            if (confirm("Are you sure?")) {
+                $http({
+                    method: "POST",
+                    data: {
+                        'id' : id
+                    },
+                    url: "deleteMember.php"
+                }).then(function success(response) {
+                    $scope.msg = response.data.msg;
+                }, function failed(response) {
+                    $scope.msg = response.data.msg;
+                });
+                $scope.clearMsg();
+            }
+        };
+
+        $scope.clearMsg = function () {
+            $timeout(function () {
+                $scope.msg = "";
+            }, 5000);
+        };
+
+        $timeout(function () {
+            $scope.clearMsg();
+        }, 3000);
+
+        $scope.checkShowOrHide = function (id) {
+            if (id != 0) {
+                if (id == $scope.tempId) {
+                    $scope.showOrHide = !$scope.showOrHide;
+                } else {
+                    if ($scope.showOrHide == true) {
+                        $scope.showOrHide = false;
+                    }
+                }
+
+            } else {
+                if ($scope.tempId != 0) {
+                    if ($scope.showOrHide == true) {
+                        $scope.showOrHide = false;
+                    }
+                } else {
+                    $scope.showOrHide = !$scope.showOrHide;
+                }
+            }
+            $scope.tempId = id;
+        }
+    });
+</script>
+</body>
+</html>
